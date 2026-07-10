@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Tirupati Temple</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style>
+body{
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    background:#f4f4f4;
+}
+
+/* HEADER */
+.topbar{
+    background:linear-gradient(to right,#ffccbc,#ce93d8);
+    padding:10px 20px;
+    display:flex;
+    justify-content:space-between;
+    font-weight:bold;
+}
+
+.navbar{
+    background:#6a1b9a;
+    color:white;
+    padding:12px;
+    display:flex;
+    gap:20px;
+    justify-content:center;
+}
+
+.navbar div{
+    cursor:pointer;
+    padding:8px 15px;
+    border-radius:8px;
+}
+.navbar div:hover{
+    background:orange;
+}
+
+/* HERO */
+.hero img{
+    width:95%;
+    height:320px;
+    object-fit:cover;
+    border-radius:20px;
+    display:block;
+    margin:20px auto;
+}
+
+/* LAYOUT */
+.container{
+    display:flex;
+    gap:20px;
+    padding:20px;
+}
+
+/* LEFT CONTENT */
+.left{flex:2.5;}
+.right{flex:1.2;}
+
+/* BIG PREDICTION BOX */
+.predict-box{
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 0 20px rgba(0,0,0,0.2);
+    position:sticky;
+    top:20px;
+}
+
+/* CARD */
+.card{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+    display:none;
+}
+.card.active{display:block;}
+
+/* BUTTON */
+button{
+    width:100%;
+    padding:12px;
+    background:linear-gradient(to right,orange,gold);
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+/* INPUT */
+input{
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+}
+
+/* MAP */
+#map{
+    height:300px;
+    border-radius:10px;
+}
+
+/* RESULT */
+.result{
+    margin-top:15px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+/* HIGHLIGHT */
+.highlight{
+    color:red;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <div>🛕 Tirumala Tirupati Devasthanams</div>
+    <div>Om Namo Venkatesaya 🙏</div>
+</div>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <div onclick="showTab('home')">Home</div>
+    <div onclick="showTab('about')">About</div>
+    <div onclick="showTab('prices')">Prices</div>
+    <div onclick="showTab('location')">Location</div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+    <img id="heroImg" src="tirupatibg.jpg">
+</div>
+
+<div class="container">
+
+    <!-- LEFT SIDE -->
+    <div class="left">
+
+        <!-- HOME -->
+        <div id="home" class="card active">
+            <h2>🏠 Welcome</h2>
+            <p>Welcome to Tirupati Temple Digital Experience. Explore divine blessings, plan your visit, and check crowd predictions.</p>
+        </div>
+
+        <!-- ABOUT -->
+        <div id="about" class="card">
+            <h2>📖 Temple History</h2>
+            <p>
+                Tirupati Balaji Temple, dedicated to Lord Venkateswara, is one of the most visited pilgrimage sites in the world.
+                Located in the Tirumala hills of Andhra Pradesh, it attracts millions of devotees annually.
+                The temple follows ancient Vaishnavite traditions and is known for its divine atmosphere.
+                Devotees believe Lord Venkateswara fulfills wishes and removes obstacles.
+                The famous Tirupati Laddu is globally recognized as prasadam.
+                Grand festivals like Brahmotsavam draw massive crowds and celebrations.
+            </p>
+        </div>
+
+        <!-- PRICES -->
+        <div id="prices" class="card">
+            <h2>💰 Prices</h2>
+            <p>Darshan Ticket: ₹300</p>
+            <p>Special Darshan: ₹500</p>
+            <p>Prasadam (Laddu): ₹50</p>
+        </div>
+
+        <!-- LOCATION -->
+        <div id="location" class="card">
+            <h2>📍 Location</h2>
+            <p>Railway Station: Tirupati (10 km)</p>
+            <p>Bus: APSRTC frequent services</p>
+            <div id="map"></div>
+        </div>
+
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="right">
+        <div class="predict-box">
+            <h2>🔮 Smart Crowd Prediction</h2>
+            <input type="text" id="date" placeholder="Select Date">
+            <input type="time" id="time">
+            <button onclick="predict()">Predict Now</button>
+            <div id="result" class="result"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// 🔹 TAB SWITCHING
+function showTab(tab){
+    document.querySelectorAll(".card").forEach(c=>c.classList.remove("active"));
+    document.getElementById(tab).classList.add("active");
+
+    if(tab==="location"){
+        setTimeout(()=>{ map.invalidateSize(); },200);
+    }
+}
+
+// 🔹 MAP
+var map=L.map('map').setView([13.6288,79.4192],10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+L.marker([13.6288,79.4192]).addTo(map);
+
+// 🔹 CALENDAR
+flatpickr("#date", {
+    dateFormat:"Y-m-d",
+    minDate:"today",
+    onDayCreate:function(dObj,dStr,fp,dayElem){
+        const festivals = {
+            "2026-01-14": "Sankranti",
+            "2026-03-08": "Maha Shivaratri",
+            "2026-09-20": "Brahmotsavam"
+        };
+        const formatted = fp.formatDate(dayElem.dateObj,"Y-m-d");
+        if(festivals[formatted]){
+            dayElem.style.backgroundColor = "#ffeb3b";
+            dayElem.style.borderRadius = "50%";
+            dayElem.title = festivals[formatted] + " Festival!";
+        }
+        const day = dayElem.dateObj.getDay();
+        if(day===0 || day===6){ dayElem.style.color="red"; } // weekend red
+    }
+});
+
+// 🔹 PREDICTION FUNCTION
+function predict() {
+
+    let date = document.getElementById("date").value;
+    let time = document.getElementById("time").value;
+
+    if(!date || !time){
+        document.getElementById("result").innerHTML = "❗ Select date & time";
+        return;
+    }
+
+    let hour = parseInt(time.split(":")[0]);
+    let d = new Date(date);
+    let day = (d.getDay()==0||d.getDay()==6)?1:0;
+
+    // 🌙 NIGHT ALERT
+    if(hour >=0 && hour<3){
+        document.getElementById("result").innerHTML = "⚠️ Temple is usually closed between 12 AM - 3 AM. Please select another time.";
+        return;
+    }
+
+    // 🔹 FESTIVAL INLINE ALERT
+    const festivals = {
+        "2026-01-14":"Sankranti",
+        "2026-03-08":"Maha Shivaratri",
+        "2026-09-20":"Brahmotsavam"
+    };
+    let festivalMsg = "";
+    if(festivals[date]){
+        festivalMsg = "<span class='highlight'>🎊 " + festivals[date] + " Festival! Expect heavy crowd.</span><br>";
+    }
+
+    // 🔮 CALL BACKEND
+    fetch("http://127.0.0.1:5000/predict",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({hour,day})
+    })
+    .then(r=>r.json())
+    .then(data=>{
+        if(data.status && data.status==="closed"){
+            document.getElementById("result").innerHTML = data.message;
+            return;
+        }
+
+        let level="", suggestion="";
+        if(data.crowd<300){ level="Low 🟢"; suggestion="💡 Best time to visit 🙏"; }
+        else if(data.crowd<700){ level="Medium 🟡"; suggestion="💡 Moderate crowd"; }
+        else{ level="High 🔴"; suggestion="💡 Heavy rush 🚨 Avoid peak hours"; }
+
+        document.getElementById("result").innerHTML =
+            festivalMsg +
+            "👥 Crowd: "+data.crowd+
+            "<br>📊 Level: "+level+
+            "<br>⏳ Waiting: "+data.waiting+" mins"+
+            "<br>"+suggestion;
+    })
+    .catch(err=>{
+        document.getElementById("result").innerHTML="❌ Error predicting crowd. Try again.";
+        console.error(err);
+    });
+
+}
+</script>
+
+</body>
+</html>
